@@ -1,41 +1,53 @@
+# pages/0_Map.py
 import streamlit as st
+import pandas as pd
+import pydeck as pdk
 
 from src.services import events
 
 st.set_page_config(page_title="FloodScope US – Map", layout="wide")
-
 st.title("FloodScope US – Map")
 
-col1, col2 = st.columns([1, 2])
+hazard = st.selectbox("Hazard type", ["All", "Riverine", "Coastal"])
+severity = st.selectbox("Severity", ["All", "Major", "Moderate", "Minor"])
 
-with col1:
-    st.subheader("Filters")
-    hazard = st.selectbox("Hazard type", ["All", "Riverine", "Coastal"])
-    severity = st.selectbox("Severity", ["All", "Major", "Moderate", "Minor"])
+evs = events.list_events(hazard=hazard, severity=severity)
 
-    active_events = events.list_events(hazard=hazard, severity=severity)
-    st.write(f"{len(active_events)} events")
+# For now, use dummy centroids; later use real geometry centroids.
+data = pd.DataFrame(
+    [
+        {
+            "lon": -96.0,  # replace with real lon
+            "lat": 37.8,   # replace with real lat
+            "name": ev["name"],
+            "severity": ev["severity"],
+            "hazard": ev["hazard"],
+        }
+        for ev in evs
+    ]
+)
 
-    selected = st.selectbox(
-        "Focus event",
-        active_events,
-        format_func=lambda e: e["name"],
-    ) if active_events else None
+view_state = pdk.ViewState(
+    latitude=37.8,
+    longitude=-96.0,
+    zoom=3.5,
+    pitch=30,
+)
 
-with col2:
-    st.subheader("Map (placeholder)")
-    st.markdown(
-        """
-        This is a Python-native map placeholder.
+layer = pdk.Layer(
+    "ScatterplotLayer",
+    data,
+    get_position="[lon, lat]",
+    get_color="[200, 30, 0, 160]",
+    get_radius=20000,
+    pickable=True,
+)
 
-        In production you would:
-        - Use a MapLibre, deck.gl, or folium-based Streamlit component.
-        - Render flood extents, gauges, roads, and exposure metrics.
-        - Hook into the `events` service for geometries and metrics.
-        """
+st.pydeck_chart(
+    pdk.Deck(
+        layers=[layer],
+        initial_view_state=view_state,
+        tooltip={"text": "{name}\n{hazard} – {severity}"},
+        map_style=None,  # or a Mapbox/Carto style if you add a key
     )
-
-    if selected:
-        st.json(selected)
-
-st.caption("Next step: replace this placeholder with a real map component.")
+)
