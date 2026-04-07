@@ -1,4 +1,3 @@
-# src/services/noaa_coops.py
 from __future__ import annotations
 from datetime import datetime, timedelta
 from typing import Any, Dict
@@ -7,7 +6,6 @@ import httpx
 BASE_URL = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter"
 
 def get_latest_water_level(station: str) -> Dict[str, Any]:
-    """Fetch ~1 day of water levels for a coastal station and return the last point."""
     end = datetime.utcnow()
     start = end - timedelta(days=1)
 
@@ -28,5 +26,5 @@ def get_latest_water_level(station: str) -> Dict[str, Any]:
         r.raise_for_status()
         data = r.json()
 
-    values = data.get("data", [])
-    return values[-1] if values else {}
+    data_points = data.get("data", [])
+    return data_points[-1] if data_points else {}
