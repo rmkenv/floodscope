@@ -77,4 +77,4 @@ with col_map:
     # Render map in Streamlit
     st_folium(m, width="100%", height=600)
 
-st.caption("Working Leaflet/OSM basemap via Folium; swap dummy centroids for real geometry later.")
+
